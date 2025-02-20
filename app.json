@@ -1,7 +1,7 @@
 {
   "name": "telegram-channel-optimizer",
   "description": "A web application to help Telegram channel owners optimize their channels for better search visibility.",
-  "repository": "https://github.com/YOUR_USERNAME/YOUR_REPOSITORY_NAME",
+  "repository": "https://github.com/manybotts/telegram-SEO",
   "keywords": ["telegram", "optimization", "seo", "trends", "channel"],
   "env": {
     "TELEGRAM_API_ID": {
@@ -13,11 +13,11 @@
       "required": true
     },
     "GOOGLE_API_KEY": {
-      "description": "Your Google API Key (for Google Trends).",
+      "description": "Your Google API Key (for Google Trends and YouTube).",
       "required": true
     },
     "X_API_BEARER_TOKEN": {
-      "description": "Your X/Twitter API Bearer Token.",
+      "description": "Your X API Bearer Token.",
       "required": true
     },
     "YOUTUBE_API_KEY": {
@@ -26,3 +26,19 @@
     },
     "DEBUG_MODE": {
       "description": "Set to 'False' for production.  'True' for development.",
+      "value": "False",
+      "required": false
+    }
+  },
+  "buildpacks": [
+    {
+      "url": "heroku/python"
+    }
+  ],
+  "formation": {
+    "web": {
+      "quantity": 1,
+      "size": "free"
+    }
+  }
+}
