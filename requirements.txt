@@ -2,7 +2,7 @@ Flask==2.3.3
 requests==2.31.0
 beautifulsoup4==4.12.2
 python-dotenv==1.0.0
-telethon==1.30.2 #Pinned the version
-lxml==4.9.3
 google-api-python-client==2.98.0
 gunicorn==21.2.0
+google-search-results  # Add this line
+lxml==4.9.3
