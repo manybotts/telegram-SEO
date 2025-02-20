@@ -1,4 +1,92 @@
-<script>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Telegram Channel Optimizer</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        body { padding-top: 20px; }
+        .results-section { margin-top: 30px; display: none; }
+        .table-responsive { overflow-x: auto; }
+        #loading-indicator { text-align: center; margin-bottom: 20px; display: none; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1 class="mb-4">Telegram Channel Optimizer</h1>
+
+        <form id="analysis-form" action="/analyze" method="POST">
+            <div class="mb-3">
+                <label for="keyword" class="form-label">Enter a Keyword:</label>
+                <input type="text" class="form-control" id="keyword" name="keyword" required>
+            </div>
+            <button type="submit" class="btn btn-primary">Analyze</button>
+        </form>
+
+        <div class="results-section" id="results-container">
+            <div id="loading-indicator">
+                <div class="spinner-border text-primary" role="status">
+                  <span class="visually-hidden">Loading...</span>
+                </div>
+                <p>Analyzing... Please wait.</p>
+            </div>
+
+            <div id="error-message" class="alert alert-danger" style="display: none;"></div>
+
+
+            <section id="trends-section" class="mb-4">
+                <h2>Trending Keywords</h2>
+                <div class="row">
+                    <div class="col-md-4">
+                        <h3>Google Trends</h3>
+                        <ul id="google-trends-list" class="list-group"></ul>
+                    </div>
+                    <div class="col-md-4">
+                        <h3>X Trends</h3>
+                        <ul id="x-trends-list" class="list-group"></ul>
+                    </div>
+                    <div class="col-md-4">
+                        <h3>YouTube Trends</h3>
+                        <ul id="youtube-trends-list" class="list-group"></ul>
+                    </div>
+                </div>
+            </section>
+
+
+
+            <section id="telegram-channels-section" class="mb-4">
+                <h2>Relevant Telegram Channels</h2>
+                <div class="table-responsive">
+                    <table class="table table-striped" id="telegram-channels-table">
+                        <thead>
+                            <tr>
+                                <th>Rank</th>
+                                <th>Username</th>
+                                <th>Name</th>
+                                <th>Subscribers</th>
+                                <th>Description</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            </tbody>
+                    </table>
+                </div>
+            </section>
+
+            <section id="metadata-suggestions-section" class="mb-4">
+                <h2>Metadata Suggestions</h2>
+                <p><strong>Suggested Channel Name:</strong> <span id="suggested-name"></span></p>
+                <p><strong>Suggested Username:</strong> <span id="suggested-username"></span></p>
+                <p><strong>Suggested Description:</strong> <span id="suggested-description"></span></p>
+            </section>
+
+        </div>
+    </div>
+
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
         $(document).ready(function() {
             $('#analysis-form').on('submit', function(e) {
                 e.preventDefault();
@@ -20,7 +108,7 @@
                     method: 'POST',
                     data: { keyword: keyword },
                     dataType: 'json',
-                    success: function(data) { // Corrected:  Call the function with the data
+                    success: function(data) {
                         $('#loading-indicator').hide();
 
                         // --- Trends ---
@@ -60,7 +148,7 @@
                         $('#suggested-username').text(data.metadata.username);
                         $('#suggested-description').text(data.metadata.description);
                     },
-                    error: function(xhr, status, error) { // Corrected: Call the function with the error parameters
+                    error: function(xhr, status, error) {
                         $('#loading-indicator').hide();
                         $('#error-message').text('An error occurred: ' + error).show();
                     }
@@ -68,3 +156,5 @@
             });
         });
     </script>
+</body>
+</html>
