@@ -30,7 +30,7 @@ This web application helps Telegram channel owners optimize their channels for b
 2.  **Install the Heroku CLI:**  [https://devcenter.heroku.com/articles/heroku-cli](https://devcenter.heroku.com/articles/heroku-cli)
 3.  **Clone this repository:**
     ```bash
-    git clone [https://github.com/manybotts/telegram-SEO.git](https://www.google.com/search?q=https://github.com/manybotts/telegram-SEO.git)
+    git clone [https://github.com/manybotts/telegram-SEO.git](https://github.com/manybotts/telegram-SEO.git)
     cd telegram-SEO
     ```
 4.  **Login to Heroku:**
@@ -65,7 +65,7 @@ This web application helps Telegram channel owners optimize their channels for b
 
 1.  **Clone the repository:**
     ```bash
-    git clone [https://github.com/manybotts/telegram-SEO.git](https://www.google.com/search?q=https://github.com/manybotts/telegram-SEO.git)
+    git clone [https://github.com/manybotts/telegram-SEO.git](https://github.com/manybotts/telegram-SEO.git)
     cd telegram-SEO
     ```
 2.  **Create a virtual environment (recommended):**
