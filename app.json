@@ -24,6 +24,10 @@
       "description": "Your YouTube Data API Key.",
       "required": true
     },
+    "SERPAPI_API_KEY": {  
+      "description": "Your SerpApi API Key.",
+      "required": true
+    },
     "DEBUG_MODE": {
       "description": "Set to 'False' for production.  'True' for development.",
       "value": "False",
@@ -38,7 +42,7 @@
   "formation": {
     "web": {
       "quantity": 1,
-      "size": "eco"  
+      "size": "eco"
     }
   }
 }
