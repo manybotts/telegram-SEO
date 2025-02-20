@@ -118,10 +118,10 @@ def index() -> str:
 @app.route('/analyze', methods=['POST'])
 def analyze() -> jsonify:
     """Handles the analysis request."""
-    print("Received /analyze request")  # Add this line
-    print(f"Request form data: {request.form}")  # Add this line
+    print("Received /analyze request")
+    print(f"Request form data: {request.form}")
     keyword = request.form.get('keyword')
-    print(f"Keyword: {keyword}") # Add this line
+    print(f"Keyword: {keyword}")
 
     if not keyword:
         return jsonify({'error': 'Keyword is required'}), 400
