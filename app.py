@@ -1,40 +1,46 @@
 from flask import Flask, render_template, request, jsonify
 import requests
 from bs4 import BeautifulSoup
-from telethon.sync import TelegramClient
-from telethon.tl.functions.channels import GetFullChannelRequest
-from telethon.errors import ChannelPrivateError, ChannelInvalidError
 import os
 import re
-import time
-import random
 from typing import Optional, Dict, List
 from googleapiclient.discovery import build
 from dotenv import load_dotenv
+from serpapi import GoogleSearch
 
 load_dotenv()
 
 app = Flask(__name__)
 
 # Environment Variables
-API_ID = int(os.environ.get("TELEGRAM_API_ID"))
-API_HASH = os.environ.get("TELEGRAM_API_HASH")
 GOOGLE_API_KEY = os.environ.get("GOOGLE_API_KEY")
 X_API_BEARER_TOKEN = os.environ.get("X_API_BEARER_TOKEN")
 YOUTUBE_API_KEY = os.environ.get("YOUTUBE_API_KEY")
+SERPAPI_API_KEY = os.environ.get("SERPAPI_API_KEY")
 
 # --- Helper Functions ---
 
-def get_google_trends(region="US") -> Optional[List[str]]:
-    """Fetches trending searches from Google Trends."""
+def get_google_trends_serpapi(region="US") -> Optional[List[str]]:
+    """Fetches trending searches from Google Trends using SerpApi."""
     try:
-        url = f"https://trends.google.com/trends/trendingsearches/daily/rss?geo={region}"
-        response = requests.get(url)
-        response.raise_for_status()
-        soup = BeautifulSoup(response.content, 'xml')
-        return [item.title.text for item in soup.find_all('item')]
-    except requests.exceptions.RequestException as e:
-        print(f"Error fetching Google Trends: {e}")
+        params = {
+            "engine": "google_trends",
+            "api_key": SERPAPI_API_KEY,
+            "hl": "en",
+            "gl": region,
+            "cat": "h",
+        }
+        search = GoogleSearch(params)
+        results = search.get_dict()
+
+        if "daily_searches" in results:
+            trends = [item["title"] for item in results["daily_searches"][0]["searches"]]
+            return trends
+        else:
+            print("Error: 'daily_searches' not found in SerpApi response.")
+            return None
+    except Exception as e:
+        print(f"Error fetching Google Trends from SerpApi: {e}")
         return None
 
 def get_x_trends(location_woeid=1) -> Optional[List[str]]:
@@ -48,6 +54,9 @@ def get_x_trends(location_woeid=1) -> Optional[List[str]]:
     except requests.exceptions.RequestException as e:
         print(f"Error fetching X Trends: {e}")
         return None
+    except Exception as e:
+        print(f"Error processing X Trends response: {e}")
+        return None
 
 def get_youtube_trending_titles(region_code="US") -> Optional[List[str]]:
     """Fetches trending YouTube titles."""
@@ -60,19 +69,75 @@ def get_youtube_trending_titles(region_code="US") -> Optional[List[str]]:
         print(f"Error fetching YouTube Trends: {e}")
         return None
 
-def analyze_telegram_channel(channel_username: str) -> Dict:
-    """Analyzes a Telegram channel and returns data or an error."""
+def search_telegram_channels_serpapi(keyword: str) -> Optional[List[Dict]]:
+    """Searches for Telegram channels using SerpApi."""
     try:
-        with TelegramClient('anon', API_ID, API_HASH) as client:
-            client.start()
-            full_channel = client(GetFullChannelRequest(channel_username))
-            return {
-                'subscribers': full_channel.full_chat.participants_count,
-                'name': full_channel.chats[0].title,
-                'description': full_channel.full_chat.about,
-                'success': True
-            }
-    except (ChannelPrivateError, ChannelInvalidError, ValueError) as e:
-        print(f"Error with channel {channel_username}: {e}")
-        return {'success': False, 'error': str(e)}  # ALWAYS return success: False
+        params = {
+            "engine": "telegram",
+            "api_key": SERPAPI_API_KEY,
+            "query": keyword,
+            "type": "channels"
+        }
+        search = GoogleSearch(params)
+        results = search.get_dict()
+
+        if "channels" in results:
+            channels = []
+            for channel in results["channels"]:
+                channels.append({
+                    'username': channel.get("username"),
+                    'name': channel.get("title"),
+                    'subscribers': channel.get("members_count"),
+                    'description': channel.get("description"),
+                    'rank': channel.get('position')
+                })
+            return channels
+        else:
+            print("Error: 'channels' not found in SerpApi response.")
+            return None
+
     except Exception as e:
+        print(f"Error fetching Telegram channels from SerpApi: {e}")
+        return None
+
+def generate_metadata(keyword: str, trends: List[str]) -> Dict:
+    """Generates channel metadata suggestions."""
+    name = f"{keyword.title()} Trends"
+    username = re.sub(r'[^a-zA-Z0-9_]', '', keyword.lower()) + "_trends"
+    username = username[:32]
+    description = f"Latest {keyword} trends! {', '.join(trends[:3])} #TelegramSEO"
+    return {'name': name, 'username': username, 'description': description}
+
+# --- Flask Routes ---
+
+@app.route('/')
+def index() -> str:
+    """Renders the main page."""
+    return render_template('index.html')
+
+@app.route('/analyze', methods=['POST'])
+def analyze() -> jsonify:
+    """Handles the analysis request."""
+    keyword = request.form.get('keyword')
+    if not keyword:
+        return jsonify({'error': 'Keyword is required'}), 400
+
+    google_trends = get_google_trends_serpapi() or []
+    x_trends = get_x_trends() or []
+    youtube_trends = get_youtube_trending_titles() or []
+    all_trends = list(set(google_trends + x_trends + youtube_trends))
+
+    telegram_results = search_telegram_channels_serpapi(keyword) or []
+    metadata_suggestions = generate_metadata(keyword, all_trends)
+
+    return jsonify({
+        'google_trends': google_trends,
+        'x_trends': x_trends,
+        'youtube_trends': youtube_trends,
+        'telegram_channels': telegram_results,
+        'metadata': metadata_suggestions
+    })
+
+if __name__ == '__main__':
+    port = int(os.environ.get("PORT", 5000))
+    app.run(debug=(os.environ.get("DEBUG_MODE", "False").lower() == "true"), host='0.0.0.0', port=port)
