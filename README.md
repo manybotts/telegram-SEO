@@ -21,7 +21,7 @@ This web application helps Telegram channel owners optimize their channels for b
     *   `GOOGLE_API_KEY`:  Your Google API Key (for Google Trends and YouTube Data API).  Get this from the Google Cloud Console ([https://console.cloud.google.com/apis/credentials](https://console.cloud.google.com/apis/credentials)).  You'll need to enable the "YouTube Data API v3" and create an API key.
     *   `X_API_BEARER_TOKEN`: Your X API Bearer Token.  You'll need a developer account and an app on X ([https://developer.twitter.com/](https://developer.twitter.com/)).
     *   `YOUTUBE_API_KEY`: Your YouTube Data API Key. Get this from the Google Cloud Console ([https://console.cloud.google.com/apis/credentials](https://console.cloud.google.com/apis/credentials)). You'll need to enable the "YouTube Data API v3" and create an API key.
-3.  **Click "Deploy app".**  Heroku will build and deploy your application.
+3.  **Click "Deploy app".**  Heroku will build and deploy your application.  **Note:** This will use Heroku's "eco" dyno plan, which is a paid service.
 4.  **Click "View"** to open your newly deployed app!
 
 ## Manual Deployment (Heroku - CLI)
@@ -52,11 +52,16 @@ This web application helps Telegram channel owners optimize their channels for b
     heroku config:set DEBUG_MODE=False  # Important for production!
     ```
     Replace `your_telegram_api_id`, etc., with your *actual* API keys.
-7.  **Deploy your code:**
+7. **Choose a Dyno type:**
+    ```bash
+        heroku dyno:type eco -a YOUR_APP_NAME
+    ```
+    Replace YOUR_APP_NAME with the name heroku created.
+8.  **Deploy your code:**
     ```bash
     git push heroku main  # Or 'master' if you're using the master branch
     ```
-8.  **Open your app:**
+9.  **Open your app:**
     ```bash
     heroku open
     ```
