@@ -18,7 +18,7 @@ app = Flask(__name__)
 GOOGLE_API_KEY = os.environ.get("GOOGLE_API_KEY")  # Used for YouTube
 X_API_BEARER_TOKEN = os.environ.get("X_API_BEARER_TOKEN")
 YOUTUBE_API_KEY = os.environ.get("YOUTUBE_API_KEY")
-TELEGRAM_API_ID = int(os.environ.get("TELEGRAM_API_ID"))  # Ensure this is an integer
+TELEGRAM_API_ID = int(os.environ.get("TELEGRAM_API_ID")) if os.environ.get("TELEGRAM_API_ID") else None  # Ensure this is an integer
 TELEGRAM_API_HASH = os.environ.get("TELEGRAM_API_HASH")
 
 
@@ -65,24 +65,22 @@ def get_youtube_trending_titles(region_code="US") -> Optional[List[str]]:
         print(f"Error fetching YouTube Trends: {e}")
         return None
 def analyze_telegram_channel(channel_username: str) -> Optional[Dict]:
-    """Analyzes a Telegram channel using the Telethon library.
-
-    Args:
-        channel_username (str): The username of the Telegram channel.
-
-    Returns:
-        dict:  A dictionary containing channel data, or None on error.  Includes
-               'subscribers', 'name', 'description' (or None if not available),
-               'success': True/False (indicating if data retrieval was successful).
-    """
+    """Analyzes a Telegram channel using the Telethon library."""
     try:
-        with TelegramClient('anon', API_ID, API_HASH) as client:
-            client.start()  # Start the client (no need to log in for public channels)
+        # Use the globals, but with extra checks
+        api_id = int(os.environ.get("TELEGRAM_API_ID")) if os.environ.get("TELEGRAM_API_ID") else None
+        api_hash = os.environ.get("TELEGRAM_API_HASH")
+
+        if not api_id or not api_hash:
+            print("Error: TELEGRAM_API_ID or TELEGRAM_API_HASH not set.")
+            return {'success': False, 'error': 'Telegram API credentials not configured.'}
+
+        with TelegramClient('anon', api_id, api_hash) as client:
+            client.start()
             try:
                 full_channel = client(GetFullChannelRequest(channel_username))
                 subscribers = full_channel.full_chat.participants_count
                 channel_name = full_channel.chats[0].title
-                # Handle cases where about/description might be missing.
                 description = full_channel.full_chat.about if full_channel.full_chat.about else None
 
                 return {
@@ -91,30 +89,29 @@ def analyze_telegram_channel(channel_username: str) -> Optional[Dict]:
                     'description': description,
                     'success': True
                 }
-            except ChannelPrivateError:
-                print(f"Channel {channel_username} is private.")
-                return {'success': False, 'error': 'Channel is private'}
-            except ChannelInvalidError:
-                print(f"Channel {channel_username} not found.")
-                return {'success': False, 'error': 'Channel not found'}
-            except ValueError as e:
-                if "Cannot find any entity" in str(e):
-                     print(f"Channel {channel_username} not found (ValueError).")
-                     return {'success': False, 'error': 'Channel not found'}
-                else:
-                    print(f"ValueError with Telethon: {e}")
-                    return {'success': False, 'error': 'Telethon error'}
-
+            except (ChannelPrivateError, ChannelInvalidError, ValueError) as e:
+                error_message = str(e)
+                if isinstance(e, ChannelPrivateError):
+                    error_message = "This channel is private."
+                elif isinstance(e, ChannelInvalidError):
+                    error_message = "Channel not found."
+                elif "Cannot find any entity" in error_message:
+                    error_message = "Channel not found."
+                print(f"Telegram channel analysis error: {error_message}")  # Log the error
+                return {'success': False, 'error': error_message}
+            except Exception as e:
+                print(f"Unexpected error analyzing Telegram channel: {e}")
+                return {'success': False, 'error': 'An unexpected error occurred.'}
 
     except Exception as e:
-        print(f"Error analyzing Telegram channel: {e}")
-        return {'success': False, 'error': str(e)}
+        print(f"Error initializing Telegram client: {e}")
+        return {'success': False, 'error': 'Failed to connect to Telegram. Check your API ID and Hash.'}
 
 
-def generate_metadata(username: str, trends: List[str]) -> Dict:  # Changed keyword to username
+
+def generate_metadata(username: str, trends: List[str]) -> Dict:
     """Generates channel metadata suggestions."""
-    # Use the provided username if possible, otherwise base it on trends
-    name = f"{username or trends[0]} Trends" if trends else "Telegram Channel" # Fallback name
+    name = f"{username or (trends[0] if trends else 'Telegram')} Trends"
     description = f"Updates and insights about {username or ', '.join(trends[:3])}. #TelegramSEO"
     return {'name': name, 'username': username, 'description': description}
 
@@ -139,16 +136,15 @@ def analyze() -> jsonify:
     all_trends = list(set(google_trends + x_trends + youtube_trends))
 
     telegram_data = analyze_telegram_channel(channel_username)
+    telegram_results = {}  # Initialize as empty
     if telegram_data and telegram_data['success']:
-      telegram_results = {
-          'username': channel_username,
-          'subscribers': telegram_data['subscribers'],
-          'name': telegram_data['name'],
-          'description': telegram_data['description']
-      }
-    else:
-      telegram_results = {}
-
+        telegram_results = {
+            'username': channel_username,
+            'subscribers': telegram_data['subscribers'],
+            'name': telegram_data['name'],
+            'description': telegram_data['description']
+        }
+    # No else:  We'll handle the error in the JavaScript
 
     metadata_suggestions = generate_metadata(channel_username, all_trends)
 
@@ -156,7 +152,8 @@ def analyze() -> jsonify:
         'google_trends': google_trends,
         'x_trends': x_trends,
         'youtube_trends': youtube_trends,
-        'telegram_channel': telegram_results,  # Return data for a *single* channel
+        'telegram_channel': telegram_results,  # Always return, even if empty
+        'telegram_error': telegram_data.get('error') if telegram_data and not telegram_data['success'] else None, # Pass error
         'metadata': metadata_suggestions
     })
 
