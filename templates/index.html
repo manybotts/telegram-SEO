@@ -18,8 +18,8 @@
 
         <form id="analysis-form" action="/analyze" method="POST">
             <div class="mb-3">
-                <label for="keyword" class="form-label">Enter a Keyword:</label>
-                <input type="text" class="form-control" id="keyword" name="keyword" required>
+                <label for="channel_username" class="form-label">Enter a Telegram Channel Username:</label>
+                <input type="text" class="form-control" id="channel_username" name="channel_username" placeholder="@username" required>
             </div>
             <button type="submit" class="btn btn-primary">Analyze</button>
         </form>
@@ -55,13 +55,12 @@
 
 
 
-            <section id="telegram-channels-section" class="mb-4">
-                <h2>Relevant Telegram Channels</h2>
+            <section id="telegram-channel-section" class="mb-4">
+                <h2>Telegram Channel Information</h2>
                 <div class="table-responsive">
                     <table class="table table-striped" id="telegram-channels-table">
-                        <thead>
+                        <thead>>
                             <tr>
-                                <th>Rank</th>
                                 <th>Username</th>
                                 <th>Name</th>
                                 <th>Subscribers</th>
@@ -91,10 +90,10 @@
             $('#analysis-form').on('submit', function(e) {
                 e.preventDefault();
 
-                const keyword = $('#keyword').val();
-                $('#results-container').show(); // Show results container
+                const channelUsername = $('#channel_username').val(); // Get username
+                $('#results-container').show();
                 $('#error-message').hide();
-                $('#loading-indicator').show(); // Show loading indicator
+                $('#loading-indicator').show();
 
                 // Clear previous results
                 $('#google-trends-list').empty();
@@ -106,7 +105,7 @@
                 $.ajax({
                     url: '/analyze',
                     method: 'POST',
-                    data: { keyword: keyword },
+                    data: { channel_username: channelUsername }, // Send username
                     dataType: 'json',
                     success: function(data) {
                         $('#loading-indicator').hide();
@@ -126,22 +125,21 @@
                         populateTrendList('#x-trends-list', data.x_trends);
                         populateTrendList('#youtube-trends-list', data.youtube_trends);
 
-                        // --- Telegram Channels ---
-                       if (data.telegram_channels && data.telegram_channels.length > 0) {
-                            data.telegram_channels.forEach(channel => {
-                                $('#telegram-channels-table tbody').append(`
-                                    <tr>
-                                        <td>${channel.rank}</td>
-                                        <td><a href="https://t.me/${channel.username}" target="_blank">@${channel.username}</a></td>
-                                        <td>${channel.name}</td>
-                                        <td>${channel.subscribers}</td>
-                                        <td>${channel.description ? channel.description : ''}</td>
-                                    </tr>
-                                `);
-                            });
+                        // --- Telegram Channel ---
+                        if (data.telegram_channel && data.telegram_channel.success) {
+                            const channel = data.telegram_channel;
+                            $('#telegram-channels-table tbody').append(`
+                                <tr>
+                                    <td><a href="https://t.me/${channel.username}" target="_blank">@${channel.username}</a></td>
+                                    <td>${channel.name}</td>
+                                    <td>${channel.subscribers}</td>
+                                    <td>${channel.description ? channel.description : ''}</td>
+                                </tr>
+                            `);
                         } else {
-                            $('#telegram-channels-table tbody').append('<tr><td colspan="5">No relevant channels found.</td></tr>');
+                             $('#telegram-channels-table tbody').append('<tr><td colspan="4">Channel not found or is private.</td></tr>');
                         }
+
 
                         // --- Metadata ---
                         $('#suggested-name').text(data.metadata.name);
