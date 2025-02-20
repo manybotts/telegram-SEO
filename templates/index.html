@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Telegram Channel Optimizer</title>
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+    <style>
+        body { padding-top: 20px; }
+        .container { max-width: 900px; }
+        .results-section { margin-top: 20px; }
+        .table-responsive { overflow-x: auto; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1 class="mb-4">Telegram Channel Optimizer</h1>
+
+        <form id="analysis-form">
+            <div class="form-group">
+                <label for="keyword">Enter a Keyword:</label>
+                <input type="text" class="form-control" id="keyword" name="keyword" required>
+            </div>
+            <button type="submit" class="btn btn-primary">Analyze</button>
+        </form>
+
+        <div class="results-section" id="results-container" style="display: none;">
+            <h2>Analysis Results</h2>
+
+            <div id="loading-indicator" style="display: none;">
+                <div class="spinner-border text-primary" role="status">
+                    <span class="sr-only">Loading...</span>
+                </div>
+                <span>Analyzing... Please wait.</span>
+            </div>
+
+
+             <section id="trends-section" class="mb-4">
+                <h3>Trending Keywords</h3>
+                 <p><b>Google Trends</b></p>
+                <ul id="google-trends-list"></ul>
+                 <p><b>X/Twitter Trends</b></p>
+                <ul id="x-trends-list"></ul>
+                 <p><b>YouTube Trends</b></p>
+                <ul id="youtube-trends-list"></ul>
+            </section>
+
+
+            <section id="telegram-channels-section" class="mb-4">
+                <h3>Relevant Telegram Channels</h3>
+                <div class="table-responsive">
+                    <table class="table table-striped" id="telegram-channels-table">
+                        <thead>
+                            <tr>
+                                <th>Rank</th>
+                                <th>Username</th>
+                                <th>Name</th>
+                                <th>Subscribers</th>
+                                <th>Description</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            </tbody>
+                    </table>
+                </div>
+            </section>
+
+            <section id="metadata-suggestions-section" class="mb-4">
+                <h3>Metadata Suggestions</h3>
+                <p><strong>Suggested Channel Name:</strong> <span id="suggested-name"></span></p>
+                <p><strong>Suggested Username:</strong> <span id="suggested-username"></span></p>
+                <p><strong>Suggested Description:</strong> <span id="suggested-description"></span></p>
+            </section>
+
+
+            <div id="error-message" class="alert alert-danger" style="display: none;"></div>
+        </div>
+    </div>
+
+    <script src="https://code.jquery.com/jquery-3.5.1.min.js"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+    <script>
+        $(document).ready(function() {
+            $('#analysis-form').on('submit', function(e) {
+                e.preventDefault();
+
+                const keyword = $('#keyword').val();
+                $('#results-container').hide();
+                $('#error-message').hide();
+                $('#loading-indicator').show(); // Show loading indicator
+
+
+                $.ajax({
+                    url: '/analyze',
+                    method: 'POST',
+                    data: { keyword: keyword },
+                    dataType: 'json',
+                    success: function(data) {
+                        $('#loading-indicator').hide(); // Hide loading indicator
+                         // Clear previous results
+                        $('#google-trends-list').empty();
+                        $('#x-trends-list').empty();
+                        $('#youtube-trends-list').empty();
+                        $('#telegram-channels-table tbody').empty();
+
+                        // Display Google Trends
+                        if (data.google_trends && data.google_trends.length > 0) {
+                            data.google_trends.forEach(trend => {
+                                $('#google-trends-list').append(`<li>${trend}</li>`);
+                            });
+                        } else {
+                            $('#google-trends-list').append('<li>No trends found.</li>');
+                        }
+
+                         // Display X Trends
+                        if (data.x_trends && data.x_trends.length > 0) {
+                            data.x_trends.forEach(trend => {
+                                $('#x-trends-list').append(`<li>${trend}</li>`);
+                            });
+                        } else {
+                             $('#x-trends-list').append('<li>No trends found.</li>');
+                        }
+
+                        // Display YouTube Trends
+                        if (data.youtube_trends && data.youtube_trends.length > 0) {
+                            data.youtube_trends.forEach(trend => {
+                                $('#youtube-trends-list').append(`<li>${trend}</li>`);
+                            });
+                        } else {
+                            $('#youtube-trends-list').append('<li>No trends found.</li>');
+                        }
+
+                        // Display Telegram Channels
+                        if (data.telegram_channels && data.telegram_channels.length > 0) {
+                            data.telegram_channels.forEach(channel => {
+                                $('#telegram-channels-table tbody').append(`
+                                    <tr>
+                                        <td><span class="math-inline">\{channel\.rank\}</td\>
+<td\><a href\="https\://t\.me/</span>{channel.username}" target="_blank">@<span class="math-inline">\{channel\.username\}</a\></td\>
+<td\></span>{channel.name}</td>
+                                        <td><span class="math-inline">\{channel\.subscribers\}</td\>
+<td\></span>{channel.description ? channel.description : ''}</td>
+                                    </tr>
+                                `);
+                            });
+                        } else {
+                            $('#telegram-channels-table tbody').append('<tr><td colspan="4">No relevant channels found.</td></tr>');
+                        }
+
+                        // Display Metadata Suggestions
+                        $('#suggested-name').text(data.metadata.name);
+                        $('#suggested-username').text(data.metadata.username);
+                        $('#suggested-description').text(data.metadata.description);
+
+                        $('#results-container').show();
+
+                    },
+                    error: function(xhr, status, error
