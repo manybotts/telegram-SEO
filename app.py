@@ -18,7 +18,7 @@ app = Flask(__name__)
 GOOGLE_API_KEY = os.environ.get("GOOGLE_API_KEY")  # Used for YouTube
 X_API_BEARER_TOKEN = os.environ.get("X_API_BEARER_TOKEN")
 YOUTUBE_API_KEY = os.environ.get("YOUTUBE_API_KEY")
-TELEGRAM_API_ID = int(os.environ.get("TELEGRAM_API_ID")) if os.environ.get("TELEGRAM_API_ID") else None  # Ensure this is an integer
+TELEGRAM_API_ID = int(os.environ.get("TELEGRAM_API_ID")) if os.environ.get("TELEGRAM_API_ID") else None
 TELEGRAM_API_HASH = os.environ.get("TELEGRAM_API_HASH")
 
 
@@ -40,18 +40,38 @@ def get_google_trends(region="US") -> Optional[List[str]]:
         return None
 
 def get_x_trends(location_woeid=1) -> Optional[List[str]]:
-    """Fetches trends from X."""
+    """Fetches trends from X using the v2 API."""
     try:
         headers = {'Authorization': f'Bearer {X_API_BEARER_TOKEN}'}
-        url = f'https://api.twitter.com/1.1/trends/place.json?id={location_woeid}'
+        # Use the v2 endpoint for getting trending topics by WOEID
+        url = f'https://api.twitter.com/2/trends/available'  # Changed to v2 endpoint
+
+
         response = requests.get(url, headers=headers)
-        response.raise_for_status()
-        return [trend['name'] for trend in response.json()[0]['trends']]
+        response.raise_for_status()  # Raise HTTPError for bad responses (4xx or 5xx)
+        response_json = response.json()
+        trends_available = []
+        for locations in response_json:
+          if locations['woeid'] == location_woeid:
+            place_name = locations['name']
+            parent_id = locations['parentid']
+
+        url_trends_location = f'https://api.twitter.com/1.1/trends/place.json?id={location_woeid}'
+        response = requests.get(url_trends_location, headers=headers)
+        response.raise_for_status()  # Raise HTTPError for bad responses (4xx or 5xx)
+        response_location_json = response.json()
+        trends = [trend['name'] for trend in response_location_json[0]['trends']]
+        return trends
+
+
     except requests.exceptions.RequestException as e:
         print(f"Error fetching X Trends: {e}")
         return None
+    except (KeyError, IndexError, TypeError) as e:
+        print(f"Error processing X Trends response: {e}")
+        return None
     except Exception as e:
-        print(f"Error processing X Trends response: {e}")  # More specific error
+        print(f"Unexpected error with X API: {e}")
         return None
 
 def get_youtube_trending_titles(region_code="US") -> Optional[List[str]]:
