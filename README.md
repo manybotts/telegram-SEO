@@ -18,10 +18,10 @@ This web application helps Telegram channel owners optimize their channels for b
 2.  **Fill in the required environment variables:**
     *   `TELEGRAM_API_ID`: Your Telegram API ID (integer). Obtain this from [https://my.telegram.org/](https://my.telegram.org/) (under "API development tools"). You'll need to log in with your Telegram account.
     *   `TELEGRAM_API_HASH`: Your Telegram API Hash (string). Obtain this from [https://my.telegram.org/](https://my.telegram.org/) (under "API development tools").
-    *   `GOOGLE_API_KEY`: Your Google API Key (for Google Trends and YouTube Data API). Get this from the Google Cloud Console ([https://console.cloud.google.com/apis/credentials](https://console.cloud.google.com/apis/credentials)). You'll need to enable the "YouTube Data API v3" and create an API key.
+    *   `GOOGLE_API_KEY`: Your Google API Key (for SerpApi). Get this from the Google Cloud Console ([https://console.cloud.google.com/apis/credentials](https://console.cloud.google.com/apis/credentials)).
     *   `X_API_BEARER_TOKEN`: Your X API Bearer Token. You'll need a developer account and an app on X ([https://developer.twitter.com/](https://developer.twitter.com/)).
     *   `YOUTUBE_API_KEY`: Your YouTube Data API Key. Get this from the Google Cloud Console ([https://console.cloud.google.com/apis/credentials](https://console.cloud.google.com/apis/credentials)). You'll need to enable the "YouTube Data API v3" and create an API key.
-    *   `SERPAPI_API_KEY`: Your SerpApi API Key. Get this from [https://serpapi.com/](https://serpapi.com/) after creating an account.  SerpApi provides the Telegram search functionality.
+    *   `SERPAPI_API_KEY`: Your SerpApi API Key. Get this from [https://serpapi.com/](https://serpapi.com/) after creating an account. SerpApi provides the Telegram search functionality.
 3.  **Click "Deploy app".** Heroku will build and deploy your application. **Note:** This will use Heroku's "eco" dyno plan, which is a paid service.
 4.  **Click "View"** to open your newly deployed app!
 
